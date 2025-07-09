@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:drift/drift.dart' show Value;
 import '../providers/providers.dart';
 import '../data/database.dart';
+import 'account_detail_screen.dart';
 
 class AccountBookScreen extends ConsumerWidget {
   const AccountBookScreen({super.key});
@@ -13,17 +14,6 @@ class AccountBookScreen extends ConsumerWidget {
     final accountGroupsAsync = ref.watch(accountGroupsProvider);
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Account Book'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddAccountDialog(context, ref),
-          ),
-        ],
-      ),
       body: accountGroupsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
@@ -38,7 +28,7 @@ class AccountBookScreen extends ConsumerWidget {
           }
           
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
             itemCount: groups.length,
             itemBuilder: (context, index) {
               final group = groups[index];
@@ -52,6 +42,7 @@ class AccountBookScreen extends ConsumerWidget {
 
   Widget _buildAccountGroupCard(BuildContext context, WidgetRef ref, AccountGroup group) {
     final accountsAsync = ref.watch(accountsByGroupProvider(group.id));
+    final balancesAsync = ref.watch(accountBalancesProvider(group.id));
     
     return Card(
       elevation: 4,
@@ -101,8 +92,32 @@ class AccountBookScreen extends ConsumerWidget {
                 );
               }
               
-              return Column(
-                children: accounts.map((account) => _buildAccountTile(context, ref, account)).toList(),
+              return balancesAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, stackTrace) => Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(child: Text('Error loading balances: $error')),
+                ),
+                data: (balances) => Column(
+                  children: [
+                    ...accounts.map((account) => _buildAccountTile(context, ref, account, balances[account.id] ?? 0.0)).toList(),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showAddAccountDialog(context, ref, group.id),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Account'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF556B2F),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -111,27 +126,21 @@ class AccountBookScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAccountTile(BuildContext context, WidgetRef ref, Account account) {
-    final balanceAsync = ref.watch(accountBalanceProvider(account.id));
-    
+  Widget _buildAccountTile(BuildContext context, WidgetRef ref, Account account, double balance) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: Colors.deepPurple.withOpacity(0.1),
-        child: const Icon(Icons.account_balance, color: Colors.deepPurple),
+        backgroundColor: const Color(0xFF556B2F).withOpacity(0.1),
+        child: const Icon(Icons.account_balance, color: Color(0xFF556B2F)),
       ),
       title: Text(
         account.name,
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
-      subtitle: balanceAsync.when(
-        loading: () => const Text('Loading balance...'),
-        error: (error, stackTrace) => const Text('Error loading balance'),
-        data: (balance) => Text(
-          'Balance: ${NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(balance)}',
-          style: TextStyle(
-            color: balance >= 0 ? Colors.green : Colors.red,
-            fontWeight: FontWeight.w500,
-          ),
+      subtitle: Text(
+        'Balance: ${NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(balance)}',
+        style: TextStyle(
+          color: balance >= 0 ? Colors.green : Colors.red,
+          fontWeight: FontWeight.w500,
         ),
       ),
       trailing: const Icon(Icons.chevron_right),
@@ -199,8 +208,8 @@ class AccountBookScreen extends ConsumerWidget {
                     groupId: Value(selectedGroupId!),
                   ));
                   
-                  ref.invalidate(accountsProvider);
-                  ref.invalidate(accountsByGroupProvider(selectedGroupId!));
+                  // Trigger refresh for all providers
+                  ref.read(refreshProvider.notifier).state++;
                   
                   Navigator.of(context).pop();
                   
@@ -222,108 +231,9 @@ class AccountBookScreen extends ConsumerWidget {
   }
 
   void _showAccountDetails(BuildContext context, WidgetRef ref, Account account) {
-    final entriesAsync = ref.watch(entriesByAccountProvider(account.id));
-    
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  account.name,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Consumer(
-              builder: (context, ref, child) {
-                final balanceAsync = ref.watch(accountBalanceProvider(account.id));
-                return balanceAsync.when(
-                  loading: () => const Text('Loading balance...'),
-                  error: (error, stackTrace) => Text('Error: $error'),
-                  data: (balance) => Text(
-                    'Current Balance: ${NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(balance)}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: balance >= 0 ? Colors.green : Colors.red,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Transaction History',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: entriesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stackTrace) => Center(child: Text('Error: $error')),
-                data: (entries) {
-                  if (entries.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No transactions yet',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    );
-                  }
-                  
-                  return ListView.builder(
-                    itemCount: entries.length,
-                    itemBuilder: (context, index) {
-                      final entry = entries[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: entry.type == 'debit' 
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
-                          child: Icon(
-                            entry.type == 'debit' ? Icons.add : Icons.remove,
-                            color: entry.type == 'debit' ? Colors.green : Colors.red,
-                          ),
-                        ),
-                        title: Text(
-                          '${entry.type.toUpperCase()}: ${NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(entry.amount)}',
-                          style: TextStyle(
-                            color: entry.type == 'debit' ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        subtitle: entry.note != null ? Text(entry.note!) : null,
-                        trailing: Text(
-                          DateFormat('MMM dd, yyyy').format(entry.createdAt),
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AccountDetailScreen(accountId: account.id),
       ),
     );
   }

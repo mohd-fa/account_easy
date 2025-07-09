@@ -36,28 +36,51 @@ class _CreateJournalScreenState extends ConsumerState<CreateJournalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Journal'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        actions: [
-          if (_currentPage == 1)
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: _saveJournal,
-            ),
-        ],
-      ),
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentPage = index;
-          });
-        },
+      body: Column(
         children: [
-          _buildPage1(),
-          _buildPage2(),
+          // Custom header
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFF556B2F),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Create Journal',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_currentPage == 1)
+                  IconButton(
+                    icon: const Icon(Icons.check, color: Colors.white),
+                    onPressed: _saveJournal,
+                  ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              children: [
+                _buildPage1(),
+                _buildPage2(),
+              ],
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: Container(

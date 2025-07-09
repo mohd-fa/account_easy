@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../providers/providers.dart';
 import '../data/database.dart';
 import '../widgets/responsive_widgets.dart';
+import 'journal_view_screen.dart';
+import 'journal_detail_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -16,13 +18,8 @@ class DashboardScreen extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-      ),
       body: ScrollableColumn(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 16.0),
         children: [
           // Summary Cards
           _buildSummaryCards(context, groupTotalsAsync, journalsAsync, accountsAsync),
@@ -67,35 +64,35 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 ResponsiveSummaryCard(
                   title: 'Assets',
-                  value: NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(totals['Assets'] ?? 0.0),
+                  value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(totals['Assets'] ?? 0.0),
                   icon: Icons.account_balance_wallet,
                   color: Colors.green,
                   isAmount: true,
                 ),
                 ResponsiveSummaryCard(
                   title: 'Liabilities',
-                  value: NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(totals['Liabilities'] ?? 0.0),
+                  value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(totals['Liabilities'] ?? 0.0),
                   icon: Icons.credit_card,
                   color: Colors.red,
                   isAmount: true,
                 ),
                 ResponsiveSummaryCard(
                   title: 'Equity',
-                  value: NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(totals['Equity'] ?? 0.0),
+                  value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(totals['Equity'] ?? 0.0),
                   icon: Icons.pie_chart,
                   color: Colors.blue,
                   isAmount: true,
                 ),
                 ResponsiveSummaryCard(
                   title: 'Revenue',
-                  value: NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(totals['Revenue'] ?? 0.0),
+                  value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(totals['Revenue'] ?? 0.0),
                   icon: Icons.trending_up,
                   color: Colors.orange,
                   isAmount: true,
                 ),
                 ResponsiveSummaryCard(
                   title: 'Expenses',
-                  value: NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(totals['Expenses'] ?? 0.0),
+                  value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(totals['Expenses'] ?? 0.0),
                   icon: Icons.trending_down,
                   color: Colors.purple,
                   isAmount: true,
@@ -210,12 +207,28 @@ class DashboardScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Recent Journals',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Recent Journals',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const JournalViewScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.arrow_forward, size: 16),
+                  label: const Text('View All'),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             journalsAsync.when(
@@ -240,8 +253,8 @@ class DashboardScreen extends ConsumerWidget {
                     final journal = recentJournals[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: Colors.deepPurple.withOpacity(0.1),
-                        child: const Icon(Icons.receipt, color: Colors.deepPurple),
+                        backgroundColor: const Color(0xFF556B2F).withOpacity(0.1),
+                        child: const Icon(Icons.receipt, color: Color(0xFF556B2F)),
                       ),
                       title: Text(
                         journal.description,
@@ -255,11 +268,18 @@ class DashboardScreen extends ConsumerWidget {
                           ? Chip(
                               label: Text(
                                 journal.referenceNumber!,
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 12, color: Colors.white),
                               ),
-                              backgroundColor: Colors.grey.shade200,
+                              backgroundColor: const Color(0xFF556B2F),
                             )
                           : null,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => JournalDetailScreen(journalId: journal.id),
+                          ),
+                        );
+                      },
                     );
                   },
                 );

@@ -158,6 +158,46 @@ class AppDatabase extends _$AppDatabase {
     return debitTotal - creditTotal;
   }
 
+  // Bulk balance calculation for better performance
+  Future<Map<int, double>> getAccountBalances(List<int> accountIds) async {
+    if (accountIds.isEmpty) return {};
+    
+    final balances = <int, double>{};
+    
+    // Initialize all balances to 0
+    for (final id in accountIds) {
+      balances[id] = 0.0;
+    }
+    
+    // Get all debits for these accounts
+    final debitsQuery = selectOnly(entries)
+      ..addColumns([entries.accountId, entries.amount.sum()])
+      ..where(entries.accountId.isIn(accountIds) & entries.type.equals('debit'))
+      ..groupBy([entries.accountId]);
+    
+    final debits = await debitsQuery.get();
+    for (final row in debits) {
+      final accountId = row.read(entries.accountId)!;
+      final amount = row.read(entries.amount.sum()) ?? 0.0;
+      balances[accountId] = (balances[accountId] ?? 0.0) + amount;
+    }
+    
+    // Get all credits for these accounts
+    final creditsQuery = selectOnly(entries)
+      ..addColumns([entries.accountId, entries.amount.sum()])
+      ..where(entries.accountId.isIn(accountIds) & entries.type.equals('credit'))
+      ..groupBy([entries.accountId]);
+    
+    final credits = await creditsQuery.get();
+    for (final row in credits) {
+      final accountId = row.read(entries.accountId)!;
+      final amount = row.read(entries.amount.sum()) ?? 0.0;
+      balances[accountId] = (balances[accountId] ?? 0.0) - amount;
+    }
+    
+    return balances;
+  }
+
   Future<Map<String, double>> getGroupTotals() async {
     final result = <String, double>{};
     final groups = await getAllAccountGroups();

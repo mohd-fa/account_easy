@@ -6,9 +6,8 @@ import 'screens/account_book_screen.dart';
 import 'screens/create_journal_screen.dart';
 import 'screens/ledger_screen.dart';
 import 'screens/settings_screen.dart';
-import 'data/database.dart';
+import 'data/sample_data.dart';
 import 'providers/providers.dart';
-import 'utils/sample_data.dart';
 
 class MainApp extends ConsumerStatefulWidget {
   const MainApp({super.key});
@@ -46,8 +45,22 @@ class _MainAppState extends ConsumerState<MainApp> {
     return MaterialApp(
       title: 'Account Easy',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF556B2F), // Dark olive green
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF556B2F),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF556B2F),
+            foregroundColor: Colors.white,
+          ),
+        ),
       ),
       home: Scaffold(
         body: SafeArea(
@@ -64,8 +77,8 @@ class _MainAppState extends ConsumerState<MainApp> {
             Icon(Icons.book, size: 30, color: Colors.white),
             Icon(Icons.settings, size: 30, color: Colors.white),
           ],
-          color: Colors.deepPurple,
-          buttonBackgroundColor: Colors.deepPurple.shade400,
+          color: const Color(0xFF556B2F), // Dark olive green
+          buttonBackgroundColor: const Color(0xFF6B8E23), // Olive drab
           backgroundColor: Colors.grey.shade100,
           animationCurve: Curves.easeInOut,
           animationDuration: const Duration(milliseconds: 600),

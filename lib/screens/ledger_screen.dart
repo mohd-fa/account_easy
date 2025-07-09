@@ -19,23 +19,15 @@ class _LedgerScreenState extends ConsumerState<LedgerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ledger'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterDialog,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildFilterChips(),
-          _buildAccountSelector(),
-          if (_selectedAccount != null) _buildLedgerView(),
-        ],
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(0, 48, 0, 0),
+        child: Column(
+          children: [
+            _buildFilterChips(),
+            _buildAccountSelector(),
+            if (_selectedAccount != null) _buildLedgerView(),
+          ],
+        ),
       ),
     );
   }
@@ -193,7 +185,7 @@ class _LedgerScreenState extends ConsumerState<LedgerScreen> {
                               ),
                             ),
                             Text(
-                              NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(balance),
+                              NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(balance),
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -339,7 +331,7 @@ class _LedgerScreenState extends ConsumerState<LedgerScreen> {
                               flex: 2,
                               child: Text(
                                 entry.type == 'debit'
-                                    ? NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(entry.amount)
+                                    ? NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(entry.amount)
                                     : '',
                                 style: const TextStyle(
                                   fontSize: 12,
@@ -352,7 +344,7 @@ class _LedgerScreenState extends ConsumerState<LedgerScreen> {
                               flex: 2,
                               child: Text(
                                 entry.type == 'credit'
-                                    ? NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(entry.amount)
+                                    ? NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(entry.amount)
                                     : '',
                                 style: const TextStyle(
                                   fontSize: 12,
@@ -364,7 +356,7 @@ class _LedgerScreenState extends ConsumerState<LedgerScreen> {
                             Expanded(
                               flex: 2,
                               child: Text(
-                                NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(runningBalance),
+                                NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(runningBalance),
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,

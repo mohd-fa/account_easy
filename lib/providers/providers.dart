@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database.dart';
 
+// Refresh notifier to trigger provider updates
+final refreshProvider = StateProvider<int>((ref) => 0);
+
 // Database provider
 final databaseProvider = Provider<AppDatabase>((ref) {
   return AppDatabase();
@@ -8,70 +11,92 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 
 // Account Groups providers
 final accountGroupsProvider = FutureProvider<List<AccountGroup>>((ref) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getAllAccountGroups();
 });
 
 final accountGroupProvider = FutureProvider.family<AccountGroup, int>((ref, id) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getAccountGroupById(id);
 });
 
 // Accounts providers
 final accountsProvider = FutureProvider<List<Account>>((ref) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getAllAccounts();
 });
 
 final accountsByGroupProvider = FutureProvider.family<List<Account>, int>((ref, groupId) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getAccountsByGroup(groupId);
 });
 
 final accountProvider = FutureProvider.family<Account, int>((ref, id) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getAccountById(id);
 });
 
 // Journals providers
 final journalsProvider = FutureProvider<List<Journal>>((ref) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getAllJournals();
 });
 
 final journalProvider = FutureProvider.family<Journal, int>((ref, id) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getJournalById(id);
 });
 
 // Entries providers
 final entriesProvider = FutureProvider<List<Entry>>((ref) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getAllEntries();
 });
 
 final entriesByJournalProvider = FutureProvider.family<List<Entry>, int>((ref, journalId) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getEntriesByJournal(journalId);
 });
 
 final entriesByAccountProvider = FutureProvider.family<List<Entry>, int>((ref, accountId) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getEntriesByAccount(accountId);
 });
 
 final entriesWithDetailsProvider = FutureProvider<List<EntryWithDetails>>((ref) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getEntriesWithDetails();
 });
 
 // Balance providers
 final accountBalanceProvider = FutureProvider.family<double, int>((ref, accountId) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getAccountBalance(accountId);
 });
 
+// Bulk balance provider for better performance
+final accountBalancesProvider = FutureProvider.family<Map<int, double>, int>((ref, groupId) async {
+  ref.watch(refreshProvider); // Watch refresh state
+  final database = ref.watch(databaseProvider);
+  final accounts = await database.getAccountsByGroup(groupId);
+  final accountIds = accounts.map((a) => a.id).toList();
+  return database.getAccountBalances(accountIds);
+});
+
 final groupTotalsProvider = FutureProvider<Map<String, double>>((ref) async {
+  ref.watch(refreshProvider); // Watch refresh state
   final database = ref.watch(databaseProvider);
   return database.getGroupTotals();
 });
